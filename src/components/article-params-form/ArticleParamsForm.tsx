@@ -1,6 +1,5 @@
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
-import cn from 'classnames';
 
 import styles from './ArticleParamsForm.module.scss';
 import { useState } from 'react';
@@ -13,32 +12,25 @@ import {
 	OptionType,
 	backgroundColors,
 	contentWidthArr,
+	ArticleStateType,
 } from 'src/constants/articleProps';
 import { RadioGroup } from 'src/ui/radio-group/RadioGroup';
 import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
+import clsx from 'clsx';
 
 interface IArticleParamsFormProps {
-	selectedFont: string; // Выбранный шрифт
-	selectedFontSize: string; // Выбранный размер шрифта
-	selectedFontColor: string; // Выбранный цвет шрифта
-	selectedBackgroundColor: string; // Выбранный цвет фона
-	selectedContentWidth: string; // Выбранная ширина
-	onFontChange: (fontFamily: string) => void; // Функция для изменения шрифта
-	onFontColorChange: (fontColor: string) => void; // Функция для изменения цвета шрифта
-	onFontSizeChange: (fontSize: string) => void; // Функция для изменения цвета шрифта
-	onBackgroundColorChange: (backgroundColor: string) => void; // Функция для изменения фона
-	onContentWidthChange: (selectedContentWidth: string) => void; // Функция изменения ширины
-	onReset: () => void; // Функция для сброса шрифта
-}
-
-// Интерфейс для объединенного состояния главной страницы
-export interface IPageSettings {
-	fontFamily: string;
-	fontSize: string;
-	fontColor: string;
-	backgroundColor: string;
-	contentWidth: string;
+	selectedFont: OptionType; // Выбранный шрифт
+	selectedFontSize: OptionType; // Выбранный размер шрифта
+	selectedFontColor: OptionType; // Выбранный цвет шрифта
+	selectedBackgroundColor: OptionType; // Выбранный цвет фона
+	selectedContentWidth: OptionType; // Выбранная ширина
+	onFontChange: (fontFamily: OptionType) => void; // Функция для изменения шрифта
+	onFontColorChange: (fontColor: OptionType) => void; // Функция для изменения цвета шрифта
+	onFontSizeChange: (fontSize: OptionType) => void; // Функция для изменения цвета шрифта
+	onBackgroundColorChange: (backgroundColor: OptionType) => void; // Функция для изменения фона
+	onContentWidthChange: (selectedContentWidth: OptionType) => void; // Функция изменения ширины
+	onReset: (defaultState: ArticleStateType) => void; // Функция для сброса настроек
 }
 
 export const ArticleParamsForm = ({
@@ -57,9 +49,9 @@ export const ArticleParamsForm = ({
 	const [isFormVisible, setIsFormVisible] = useState(false); // Состояние для видимости формы
 
 	// Объединенное состояние для временного хранения настроек
-	const [tempSettings, setTempSettings] = useState<IPageSettings>({
-		fontFamily: selectedFont,
-		fontSize: selectedFontSize,
+	const [tempSettings, setTempSettings] = useState<ArticleStateType>({
+		fontFamilyOption: selectedFont,
+		fontSizeOption: selectedFontSize,
 		fontColor: selectedFontColor,
 		backgroundColor: selectedBackgroundColor,
 		contentWidth: selectedContentWidth,
@@ -67,19 +59,19 @@ export const ArticleParamsForm = ({
 
 	// Универсальный обработчик изменений
 	const handleOptionChange = (
-		key: keyof IPageSettings,
+		key: keyof ArticleStateType,
 		selected: OptionType
 	) => {
 		setTempSettings((prev) => ({
 			...prev, // Копируем предыдущее состояние
-			[key]: selected.value, // Обновляем конкретное поле
+			[key]: selected, // Обновляем конкретное поле
 		}));
 	};
 
 	const handleApply = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault(); // Отменяем перезагрузку страницы
-		onFontChange(tempSettings.fontFamily); // Передаем выбранный шрифт в родительский компонент
-		onFontSizeChange(tempSettings.fontSize); // Передаем выбранный размер шрифта
+		onFontChange(tempSettings.fontFamilyOption); // Передаем выбранный шрифт в родительский компонент
+		onFontSizeChange(tempSettings.fontSizeOption); // Передаем выбранный размер шрифта
 		onFontColorChange(tempSettings.fontColor); // Передаем выбранный цвет шрифта
 		onBackgroundColorChange(tempSettings.backgroundColor); // Передаем выбранный цвет фона
 		onContentWidthChange(tempSettings.contentWidth); // Передаем выбранную ширину
@@ -87,14 +79,7 @@ export const ArticleParamsForm = ({
 
 	// Обработчик для кнопки "Сбросить"
 	const handleReset = () => {
-		setTempSettings({
-			fontFamily: defaultArticleState.fontFamilyOption.value,
-			fontSize: defaultArticleState.fontSizeOption.value,
-			fontColor: defaultArticleState.fontColor.value,
-			backgroundColor: defaultArticleState.backgroundColor.value,
-			contentWidth: defaultArticleState.contentWidth.value,
-		});
-		onReset(); // Вызываем функцию сброса из родительского компонента
+		onReset(defaultArticleState); // Передаем defaultArticleState в родительский компонент
 	};
 
 	// Обработчик для открытия/закрытия формы
@@ -106,7 +91,7 @@ export const ArticleParamsForm = ({
 			<ArrowButton isOpen={isFormVisible} onClick={toggleFormVisibility} />
 			{isFormVisible && (
 				<aside
-					className={cn(styles.container, {
+					className={clsx(styles.container, {
 						[styles.container_open]: isFormVisible, // Добавляем класс для открытия
 					})}>
 					<form onSubmit={handleApply} className={styles.form}>
@@ -116,30 +101,32 @@ export const ArticleParamsForm = ({
 						<Select
 							selected={
 								fontFamilyOptions.find(
-									(opt) => opt.value === tempSettings.fontFamily
+									(opt) => opt.value === tempSettings.fontFamilyOption.value
 								) || null
 							}
 							options={fontFamilyOptions}
 							title='шрифт'
 							onChange={(selected) =>
-								handleOptionChange('fontFamily', selected)
+								handleOptionChange('fontFamilyOption', selected)
 							}
 						/>
 						<RadioGroup
 							selected={
 								fontSizeOptions.find(
-									(opt) => opt.value === tempSettings.fontSize
+									(opt) => opt.value === tempSettings.fontSizeOption.value
 								) || defaultArticleState.fontSizeOption
 							}
 							options={fontSizeOptions}
 							title='размер шрифта'
 							name='font-size'
-							onChange={(selected) => handleOptionChange('fontSize', selected)}
+							onChange={(selected) =>
+								handleOptionChange('fontSizeOption', selected)
+							}
 						/>
 						<Select
 							selected={
 								fontColors.find(
-									(opt) => opt.value === tempSettings.fontColor
+									(opt) => opt.value === tempSettings.fontColor.value
 								) || null
 							}
 							options={fontColors}
@@ -150,7 +137,7 @@ export const ArticleParamsForm = ({
 						<Select
 							selected={
 								backgroundColors.find(
-									(opt) => opt.value === tempSettings.backgroundColor
+									(opt) => opt.value === tempSettings.backgroundColor.value
 								) || null
 							}
 							options={backgroundColors}
@@ -162,7 +149,7 @@ export const ArticleParamsForm = ({
 						<Select
 							selected={
 								contentWidthArr.find(
-									(opt) => opt.value === tempSettings.contentWidth
+									(opt) => opt.value === tempSettings.contentWidth.value
 								) || null
 							}
 							options={contentWidthArr}

@@ -3,11 +3,12 @@ import { StrictMode, CSSProperties, useState } from 'react';
 import clsx from 'clsx';
 
 import { Article } from './components/article/Article';
+import { ArticleParamsForm } from './components/article-params-form/ArticleParamsForm';
 import {
-	ArticleParamsForm,
-	IPageSettings,
-} from './components/article-params-form/ArticleParamsForm';
-import { defaultArticleState } from './constants/articleProps';
+	ArticleStateType,
+	defaultArticleState,
+	OptionType,
+} from './constants/articleProps';
 
 import './styles/index.scss';
 import styles from './styles/index.module.scss';
@@ -17,31 +18,23 @@ const root = createRoot(domNode);
 
 const App = () => {
 	// Объединенное состояние
-	const [settings, setSettings] = useState<IPageSettings>({
-		fontFamily: defaultArticleState.fontFamilyOption.value,
-		fontSize: defaultArticleState.fontSizeOption.value,
-		fontColor: defaultArticleState.fontColor.value,
-		backgroundColor: defaultArticleState.backgroundColor.value,
-		contentWidth: defaultArticleState.contentWidth.value,
-	});
+	const [settings, setSettings] =
+		useState<ArticleStateType>(defaultArticleState);
 
 	// Универсальный обработчик изменений
-	const handleOptionChange = (key: keyof IPageSettings, value: string) => {
+	const handleOptionChange = (
+		key: keyof ArticleStateType,
+		selected: OptionType
+	) => {
 		setSettings((prev) => ({
 			...prev, // Копируем предыдущее состояние
-			[key]: value, // Обновляем конкретное поле
+			[key]: selected, // Обновляем конкретное поле
 		}));
 	};
 
 	// Функция для сброса
-	const handleReset = () => {
-		setSettings({
-			fontFamily: defaultArticleState.fontFamilyOption.value,
-			fontSize: defaultArticleState.fontSizeOption.value,
-			fontColor: defaultArticleState.fontColor.value,
-			backgroundColor: defaultArticleState.backgroundColor.value,
-			contentWidth: defaultArticleState.contentWidth.value,
-		});
+	const handleReset = (defaultState: ArticleStateType) => {
+		setSettings(defaultState); // Устанавливаем состояние по умолчанию
 	};
 
 	return (
@@ -49,22 +42,24 @@ const App = () => {
 			className={clsx(styles.main)}
 			style={
 				{
-					'--font-family': settings.fontFamily,
-					'--font-size': settings.fontSize,
-					'--font-color': settings.fontColor,
-					'--container-width': settings.contentWidth,
-					'--bg-color': settings.backgroundColor,
+					'--font-family': settings.fontFamilyOption.value,
+					'--font-size': settings.fontSizeOption.value,
+					'--font-color': settings.fontColor.value,
+					'--container-width': settings.contentWidth.value,
+					'--bg-color': settings.backgroundColor.value,
 				} as CSSProperties
 			}>
 			<ArticleParamsForm
-				selectedFont={settings.fontFamily}
-				selectedFontSize={settings.fontSize}
+				selectedFont={settings.fontFamilyOption}
+				selectedFontSize={settings.fontSizeOption}
 				selectedFontColor={settings.fontColor}
 				selectedBackgroundColor={settings.backgroundColor}
 				selectedContentWidth={settings.contentWidth}
-				onFontChange={(selected) => handleOptionChange('fontFamily', selected)}
+				onFontChange={(selected) =>
+					handleOptionChange('fontFamilyOption', selected)
+				}
 				onFontSizeChange={(selected) =>
-					handleOptionChange('fontSize', selected)
+					handleOptionChange('fontSizeOption', selected)
 				}
 				onFontColorChange={(selected) =>
 					handleOptionChange('fontColor', selected)
@@ -75,7 +70,7 @@ const App = () => {
 				onContentWidthChange={(selected) =>
 					handleOptionChange('contentWidth', selected)
 				}
-				onReset={handleReset}
+				onReset={handleReset} // Передаем handleReset
 			/>
 			<Article />
 		</main>
